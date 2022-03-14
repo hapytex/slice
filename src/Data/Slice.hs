@@ -42,7 +42,7 @@ getIndices :: Integral a => Slice a -> a -> Maybe (a, a, a)
 getIndices sl@{ slFrom=f, slTo=t } n
   | stepDir = Nothing  -- forward
   | step < 0 = Nothing  -- backward
-  | otherwise = Nothing
+  | otherwise = Just (start, stop, step)
   where step = getNumStep sl
         stepDir = step > 0
         lower = bool (-1) 0 stepDir
