@@ -17,6 +17,9 @@ showSlice (Slice sa sb sc) = go sa (':' : go sb (':' : go sc ""))
   where go Nothing = id
         go (Just x) = (show x ++)
 
+_lowerCheck :: Num a => a -> Maybe a
+_lowerCheck =
+
 getIndex :: Num a => a -> Maybe a -> Maybe a
 getIndex n = fmap go
   where go i | i < 0 = n + i
