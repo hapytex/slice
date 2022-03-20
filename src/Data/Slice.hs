@@ -2,8 +2,10 @@
 
 module Data.Slice where
 
+import Data.Bool(bool)
 import Data.Maybe(fromMaybe, maybe)
 import Data.Range(Range)
+import Data.Tuple(swap)
 
 data Slice a =
   Slice {
@@ -17,13 +19,15 @@ showSlice (Slice sa sb sc) = go sa (':' : go sb (':' : go sc ""))
   where go Nothing = id
         go (Just x) = (show x ++)
 
-_lowerCheck :: Num a => a -> Maybe a
-_lowerCheck =
+_lowerCheck :: (Num a, Ord a) => a -> Maybe a
+_lowerCheck n
+  | n < 0 = Nothing
+  | otherwise = Just n
 
-getIndex :: Num a => a -> Maybe a -> Maybe a
-getIndex n = fmap go
-  where go i | i < 0 = n + i
-             | otherwise = i
+getIndex :: (Num a, Ord a) => a -> (a, a) -> Maybe a -> Maybe a
+getIndex n ~(lo, up) = fmap go
+  where go i | i < 0 = max (n + i) lo
+             | otherwise = min i up
 
 getNumStep :: Num a => Slice a -> a
 getNumStep = fromMaybe 1 . slStep
@@ -34,25 +38,33 @@ isReverse = (0 >) . getNumStep
 isForward :: (Num a, Ord a) => Slice a -> Bool
 isForward = (0 <) . getNumStep
 
-getLowerUpper :: Num a => Slice a -> a -> Maybe (a, a)
-getLowerUpper sl n
-  | step < 0 = Just (-1, n-1)
-  | step > 0 = Just (0, n)
-  | otherwise = Nothing
-  where step = getNumStep
+isValidStep :: (Num a, Ord a) => Slice a -> Bool
+isValidStep Slice { slStep=sl } = maybe True (0 /=) sl
+
+validStepCheck :: (Num a, Ord a) => (Slice a -> b) -> Slice a -> Maybe b
+validStepCheck f = go
+  where go sl
+          | isValidStep sl = Just (f sl)
+          | otherwise = Nothing
+
+getLowerUpper' :: (Num a, Ord a) => a -> Slice a -> (a, a)
+getLowerUpper' sl n
+  | isForward sl = (0, n)
+  | otherwise = (-1, n-1)
+
+getLowerUpper :: (Num a, Ord a) => a -> Slice a -> Maybe (a, a)
+getLowerUpper = validStepCheck . getLowerUpper'
 
 getIndices :: Integral a => Slice a -> a -> Maybe (a, a, a)
-getIndices sl@{ slFrom=f, slTo=t } n
+getIndices sl@Slice { slFrom=f, slTo=t } n
   | stepDir = Nothing  -- forward
   | step < 0 = Nothing  -- backward
   | otherwise = Just (start, stop, step)
   where step = getNumStep sl
         stepDir = step > 0
-        lower = bool (-1) 0 stepDir
-        upper = n + lower
-        ~(sta, sto) = bool id swap stepDir (lower, upper)
-        start = fromMaybe sta (getIndex n f)
-        stop = fromMaybe sto (getIndex n t)
+        ~(low, up) = getLowerUpper' sl n
+        start = fromMaybe sta (getIndex n f) -- max low
+        stop = fromMaybe sto (getIndex n t)  --
 
 -- stepNegative :: Num a => Slice a -> a
 
