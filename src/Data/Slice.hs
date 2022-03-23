@@ -3,8 +3,7 @@
 module Data.Slice where
 
 import Data.Bool(bool)
-import Data.Maybe(fromMaybe, maybe)
-import Data.Range(Range)
+import Data.Maybe(fromMaybe)
 import Data.Tuple(swap)
 
 data Slice a =
@@ -24,8 +23,8 @@ _lowerCheck n
   | n < 0 = Nothing
   | otherwise = Just n
 
-getIndex :: (Num a, Ord a) => a -> (a, a) -> Maybe a -> Maybe a
-getIndex n ~(lo, up) = fmap go
+getIndex :: (Num a, Ord a) => a -> (a, a) -> a -> Maybe a -> a
+getIndex n ~(lo, up) = (`maybe` go)
   where go i | i < 0 = max (n + i) lo
              | otherwise = min i up
 
@@ -48,7 +47,7 @@ validStepCheck f = go
           | otherwise = Nothing
 
 getLowerUpper' :: (Num a, Ord a) => a -> Slice a -> (a, a)
-getLowerUpper' sl n
+getLowerUpper' n sl
   | isForward sl = (0, n)
   | otherwise = (-1, n-1)
 
@@ -57,16 +56,13 @@ getLowerUpper = validStepCheck . getLowerUpper'
 
 getIndices :: Integral a => Slice a -> a -> Maybe (a, a, a)
 getIndices sl@Slice { slFrom=f, slTo=t } n
-  | stepDir = Nothing  -- forward
-  | step < 0 = Nothing  -- backward
-  | otherwise = Just (start, stop, step)
+  | step /= 0 = Just (go staFb f, go stoFb t, step)
+  | otherwise = Nothing
   where step = getNumStep sl
         stepDir = step > 0
-        ~(low, up) = getLowerUpper' sl n
-        start = fromMaybe sta (getIndex n f) -- max low
-        stop = fromMaybe sto (getIndex n t)  --
-
--- stepNegative :: Num a => Slice a -> a
+        lu = getLowerUpper' n sl
+        ~(staFb, stoFb) = bool id swap stepDir lu
+        go = getIndex n lu
 
 class Slicable a b where
     slice :: a -> Slice b -> a
