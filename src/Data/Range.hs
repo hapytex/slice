@@ -22,13 +22,13 @@ rangeFromThenTo :: Num a => a -> a -> a -> Range a
 rangeFromThenTo x1 x2 xn = Range x1 xn (x2-x1)
 
 integralNumberOfItems :: Integral a => Range a -> Maybe a
-integralNumberOfItems = undefined
+integralNumberOfItems Range { rStart=s, rEnd=e, rStep=st } = Just (div (e-s) st)
 
-realFracNumberOfItems :: RealFrac a => Range a -> Maybe a
-realFracNumberOfItems Range { rStart=s, rEnd=e, rStep=st } = floor ((e-x) / st)
+realFracNumberOfItems :: (RealFrac a, Integral b) => Range a -> Maybe b
+realFracNumberOfItems Range { rStart=s, rEnd=e, rStep=st } = Just (floor ((e-s) / st))
 
 -- items :: Num a => Range a -> Range a
 -- items =
 
 sliceRange :: Num a => Slice a -> Range a -> Range a
-sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } =
+sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } = undefined
