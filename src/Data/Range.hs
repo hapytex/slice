@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, IncoherentInstances, MultiParamTypeClasses, UndecidableInstances #-}
 
 module Data.Range where
 
@@ -39,6 +39,16 @@ realFracNumberOfItems = max 0 . realFracNumberOfItems'
 elementAt :: (Num a, Integral i) => Range a -> i -> a
 elementAt ~(Range s _ st) i = s + fromIntegral i * st
 
+class FloorDiv a where
+  floorDiv :: Integral b => a -> a -> b
+
+instance {-# Overlapping #-} Integral a => FloorDiv a where
+  floorDiv a = fromIntegral . div a
+
+instance {-# Overlappable #-} RealFrac a => FloorDiv a where
+  floorDiv a = floor . (a /)
+
+{-
 instance {-# Overlapping #-} Integral a => Indicable Range a where
   (!) = elementAt
   (!?) r i
@@ -53,3 +63,4 @@ instance {-# Overlappable #-} RealFrac a => Indicable Range a where
 
 sliceRange :: Num a => Slice a -> Range a -> Range a
 sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } = undefined
+-}
