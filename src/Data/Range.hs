@@ -3,7 +3,7 @@
 module Data.Range where
 
 import Data.Indicable(Indicable((!), (!?)))
-import Data.Slice(Slice, getIndices)
+import Data.Slice(Slice(Slice), getIndices)
 
 data Range a
   = Range {
@@ -39,14 +39,8 @@ realFracNumberOfItems = max 0 . realFracNumberOfItems'
 elementAt :: (Num a, Integral i) => Range a -> i -> a
 elementAt ~(Range s _ st) i = s + fromIntegral i * st
 
-class FloorDiv a where
-  floorDiv :: Integral b => a -> a -> b
-
-instance {-# Overlapping #-} Integral a => FloorDiv a where
-  floorDiv a = fromIntegral . div a
-
-instance {-# Overlappable #-} RealFrac a => FloorDiv a where
-  floorDiv a = floor . (a /)
+toSlice :: Range a -> Slice a
+toSlice (Range s e st) = Slice (Just s) (Just e) (Just st)
 
 {-
 instance {-# Overlapping #-} Integral a => Indicable Range a where
