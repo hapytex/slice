@@ -42,6 +42,9 @@ elementAt ~(Range s _ st) i = s + fromIntegral i * st
 toSlice :: Range a -> Slice a
 toSlice (Range s e st) = Slice (Just s) (Just e) (Just st)
 
+getRangeIndices :: Integral a => Slice a -> a -> Maybe (Range a)
+getRangeIndices sl n = (\~(x, y, z) -> Range x y z) <$> getIndices sl n
+
 {-
 instance {-# Overlapping #-} Integral a => Indicable Range a where
   (!) = elementAt
