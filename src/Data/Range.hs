@@ -1,9 +1,11 @@
-{-# LANGUAGE FlexibleInstances, IncoherentInstances, MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, DataKinds, FlexibleInstances, FunctionalDependencies, IncoherentInstances, KindSignatures, MultiParamTypeClasses, UndecidableInstances #-}
 
 module Data.Range where
 
 import Data.Indicable(Indicable((!), (!?)))
 import Data.Slice(Slice(Slice), getIndices)
+
+import GHC.TypeLits(Nat)
 
 data Range a
   = Range {
@@ -43,21 +45,22 @@ toSlice :: Range a -> Slice a
 toSlice (Range s e st) = Slice (Just s) (Just e) (Just st)
 
 getRangeIndices :: Integral a => Slice a -> a -> Maybe (Range a)
-getRangeIndices sl n = (\~(x, y, z) -> Range x y z) <$> getIndices sl n
+getRangeIndices sl n = (\(x, y, z) -> Range x y z) <$> getIndices sl n
 
-{-
-instance {-# Overlapping #-} Integral a => Indicable Range a where
+class FloorDiv (n :: Nat) a where
+  floorDiv :: Integral b => a -> a -> b
+
+instance {-# Overlapping #-} Integral a => FloorDiv 0 a where
+  floorDiv a = fromIntegral . div a
+
+instance {-# Overlappable #-} RealFrac a => FloorDiv 1 a where
+  floorDiv a = floor . (a /)
+
+instance FloorDiv n a => Indicable Range a where
   (!) = elementAt
   (!?) r i
     | i < 0 || i >= fromIntegral (integralNumberOfItems' r) = Nothing
     | otherwise = Just (r ! i)
 
-instance {-# Overlappable #-} RealFrac a => Indicable Range a where
-  (!) = elementAt
-  (!?) r i
-    | i < 0 || i >= fromIntegral (realFracNumberOfItems' r) = Nothing
-    | otherwise = Just (r ! i)
-
 sliceRange :: Num a => Slice a -> Range a -> Range a
 sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } = undefined
--}
