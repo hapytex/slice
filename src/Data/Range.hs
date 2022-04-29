@@ -47,7 +47,7 @@ toSlice (Range s e st) = Slice (Just s) (Just e) (Just st)
 getRangeIndices :: Integral a => Slice a -> a -> Maybe (Range a)
 getRangeIndices sl n = (\(x, y, z) -> Range x y z) <$> getIndices sl n
 
-class FloorDiv (n :: Nat) a where
+class Num a => FloorDiv (n :: Nat) a where
   floorDiv :: Integral b => a -> a -> b
 
 instance {-# Overlapping #-} Integral a => FloorDiv 0 a where
