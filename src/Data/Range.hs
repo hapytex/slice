@@ -1,4 +1,4 @@
-{-# LANGUAGE AllowAmbiguousTypes, DataKinds, FlexibleInstances, FunctionalDependencies, IncoherentInstances, KindSignatures, MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes, DataKinds, FlexibleInstances, FunctionalDependencies, IncoherentInstances, KindSignatures, MultiParamTypeClasses, ScopedTypeVariables, TypeApplications, UndecidableInstances #-}
 
 module Data.Range where
 
@@ -26,17 +26,11 @@ rangeFromToStep = Range
 rangeFromThenTo :: Num a => a -> a -> a -> Range a
 rangeFromThenTo x1 x2 xn = Range x1 xn (x2-x1)
 
-integralNumberOfItems' :: Integral a => Range a -> a
-integralNumberOfItems' ~(Range { rStart=s, rEnd=e, rStep=st }) = div (e-s) st
+numberOfItems' :: forall n a b . (FloorDiv n a, Integral b) => Range a -> b
+numberOfItems' (Range s e st) = floorDiv @n (e-s) st
 
-realFracNumberOfItems' :: (RealFrac a, Integral b) => Range a -> b
-realFracNumberOfItems' ~(Range { rStart=s, rEnd=e, rStep=st }) = floor ((e-s) / st)
-
-integralNumberOfItems :: Integral a => Range a -> a
-integralNumberOfItems = max 0 . integralNumberOfItems'
-
-realFracNumberOfItems :: (RealFrac a, Integral b) => Range a -> b
-realFracNumberOfItems = max 0 . realFracNumberOfItems'
+numberOfItems :: forall n a b . (FloorDiv n a, Integral b) => Range a -> b
+numberOfItems = max 0 . numberOfItems' @n
 
 elementAt :: (Num a, Integral i) => Range a -> i -> a
 elementAt ~(Range s _ st) i = s + fromIntegral i * st
@@ -59,8 +53,8 @@ instance {-# Overlappable #-} RealFrac a => FloorDiv 1 a where
 instance FloorDiv n a => Indicable Range a where
   (!) = elementAt
   (!?) r i
-    | i < 0 || i >= fromIntegral (integralNumberOfItems' r) = Nothing
-    | otherwise = Just (r ! i)
+    | i < 0 || i >= fromIntegral (numberOfItems' @n r) = Nothing
+    | otherwise = Just (elementAt r i)
 
 sliceRange :: Num a => Slice a -> Range a -> Range a
 sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } = undefined
