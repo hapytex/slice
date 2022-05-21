@@ -46,5 +46,7 @@ instance FloorDiv n a => Indicable Range a where
     | i < 0 || i >= fromIntegral (numberOfItems' @n r :: Integer) = Nothing
     | otherwise = Just (elementAt r i)
 
-sliceRange :: Num a => Slice a -> Range a -> Range a
-sliceRange sl Range { rStart=rS, rEnd=rE, rStep=rSt } = undefined
+sliceRange :: forall n a . (FloorDiv n a, Num a, Ord a) => Slice a -> Range a -> Maybe (Range a)
+sliceRange sl r@Range { rStart=rS, rEnd=rE, rStep=rSt }
+  | Just (sS, sE, sSt) <- getIndices sl (fromIntegral (numberOfItems' @n r :: Integer)) = Nothing
+  | otherwise = Nothing

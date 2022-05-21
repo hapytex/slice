@@ -54,7 +54,7 @@ getLowerUpper' n sl
 getLowerUpper :: (Num a, Ord a) => a -> Slice a -> Maybe (a, a)
 getLowerUpper = validStepCheck . getLowerUpper'
 
-getIndices :: Integral a => Slice a -> a -> Maybe (a, a, a)
+getIndices :: (Num a, Ord a) => Slice a -> a -> Maybe (a, a, a)
 getIndices sl@Slice { slFrom=f, slTo=t } n
   | step /= 0 = Just (go staFb f, go stoFb t, step)
   | otherwise = Nothing
