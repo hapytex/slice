@@ -1,8 +1,10 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
 
 module Data.Slice where
 
 import Data.Bool(bool)
+import Data.Default.Class(Default(def))
+import Data.List(genericDrop)
 import Data.Maybe(fromMaybe)
 import Data.Tuple(swap)
 
@@ -13,10 +15,12 @@ data Slice a =
     , slStep :: Maybe a
     } deriving (Eq, Read, Show)
 
+instance Default (Slice a) where
+    def = Slice Nothing Nothing Nothing
+
 showSlice :: Show a => Slice a -> String
 showSlice (Slice sa sb sc) = go sa (':' : go sb (':' : go sc ""))
-  where go Nothing = id
-        go (Just x) = (show x ++)
+  where go = maybe id ((++) . show)
 
 _lowerCheck :: (Num a, Ord a) => a -> Maybe a
 _lowerCheck n
@@ -66,3 +70,30 @@ getIndices sl@Slice { slFrom=f, slTo=t } n
 
 class Slicable a b where
     slice :: a -> Slice b -> a
+    {-# MINIMAL slice #-}
+
+class PartialSlicable a b where
+    trySlice :: a -> Slice b -> Maybe a
+    {-# MINIMAL trySlice #-}
+
+instance Slicable a b => PartialSlicable a b where
+    trySlice s = Just . slice s
+
+instance Integral b => Slicable [a] b where
+    slice = undefined
+
+isVoid :: (Num a, Ord a) => Slice a -> Bool
+isVoid (Slice bg en st) = not (isNotVoid_ st bg en)
+
+isNotVoid_ :: (Num a, Ord a) => a -> a -> a -> Bool
+isNotVoid_ st
+  | st <= 0 = (<)
+  | otherwise = (>)
+
+takeEach_ :: Integral i => i -> [a] -> [a]
+takeEach_ 1 = id  -- runtime optimization
+takeEach_ 0 = repeat . head
+takeEach_ n = go
+    where go [] = []
+          go (x:xs) = x : go (go' xs)
+          go' = genericDrop (abs n - 1)
