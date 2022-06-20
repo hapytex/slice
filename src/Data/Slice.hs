@@ -70,11 +70,19 @@ getIndices sl@Slice { slFrom=f, slTo=t } n
 
 class Slicable a b where
     slice :: a -> Slice b -> a
-    {-# MINIMAL slice #-}
+    slice = (⋮)
+
+    (⋮) :: a -> Slice b -> a
+    (⋮) = slice
+    {-# MINIMAL slice | (:) #-}
 
 class PartialSlicable a b where
     trySlice :: a -> Slice b -> Maybe a
-    {-# MINIMAL trySlice #-}
+    trySlice = (⋮?)
+
+    (⋮?) :: a -> Slice b -> Maybe a
+    (⋮?) = trySlice
+    {-# MINIMAL trySlice | (⋮?) #-}
 
 instance Slicable a b => PartialSlicable a b where
     trySlice s = Just . slice s
