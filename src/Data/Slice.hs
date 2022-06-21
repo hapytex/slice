@@ -8,7 +8,7 @@ import Data.List(genericDrop)
 import Data.Maybe(fromMaybe)
 import Data.Tuple(swap)
 
-import Text.Parsec(ParsecT, Stream, optionMaybe)
+import Text.Parsec(ParsecT, Stream, option, optionMaybe)
 import Text.Parsec.Char(char)
 
 data Slice a =
@@ -26,8 +26,8 @@ showSlice (Slice sa sb sc) = go sa (':' : go sb (':' : go sc ""))
   where go = maybe id ((++) . show)
 
 parseSlice :: Stream s m Char => ParsecT s u m a -> ParsecT s u m (Slice a)
-parseSlice item = Slice <$> oi <*> (cc *> oi) <*> optionMaybe (cc *> item)
-  where cc = char ':'
+parseSlice item = Slice <$> oi <*> cc <*> option Nothing cc
+  where cc = char ':' *> oi
         oi = optionMaybe item
 
 _lowerCheck :: (Num a, Ord a) => a -> Maybe a
