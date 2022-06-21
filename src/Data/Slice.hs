@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
 
 module Data.Slice where
 
@@ -7,6 +7,9 @@ import Data.Default.Class(Default(def))
 import Data.List(genericDrop)
 import Data.Maybe(fromMaybe)
 import Data.Tuple(swap)
+
+import Text.Parsec(ParsecT, Stream)
+import Text.Parsec.Char(char)
 
 data Slice a =
   Slice {
@@ -21,6 +24,9 @@ instance Default (Slice a) where
 showSlice :: Show a => Slice a -> String
 showSlice (Slice sa sb sc) = go sa (':' : go sb (':' : go sc ""))
   where go = maybe id ((++) . show)
+
+parseSlice :: Stream s m Char => ParsecT s u m a -> ParsecT s u m (Slice a)
+parseSlice item = Slice <$> undefined <*> undefined <*> undefined
 
 _lowerCheck :: (Num a, Ord a) => a -> Maybe a
 _lowerCheck n
@@ -84,14 +90,15 @@ class PartialSlicable a b where
     (⋮?) = trySlice
     {-# MINIMAL trySlice | (⋮?) #-}
 
-instance Slicable a b => PartialSlicable a b where
+instance {-# Overlappable #-} Slicable a b => PartialSlicable a b where
     trySlice s = Just . slice s
 
 instance Integral b => Slicable [a] b where
     slice = undefined
 
 isVoid :: (Num a, Ord a) => Slice a -> Bool
-isVoid (Slice bg en st) = not (isNotVoid_ st bg en)
+isVoid s@(Slice (Just bg) (Just en) _) = not (isNotVoid_ (getNumStep s) bg en)
+isVoid _ = False
 
 isNotVoid_ :: (Num a, Ord a) => a -> a -> a -> Bool
 isNotVoid_ st
