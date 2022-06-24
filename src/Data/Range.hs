@@ -16,6 +16,9 @@ data Range a
 rangeTo :: Num a => a -> Range a
 rangeTo = rangeFromTo 0
 
+instance Integral a => Semigroup (Range a) where
+  (<>) = undefined
+
 rangeFromTo :: Num a => a -> a -> Range a
 rangeFromTo from to = rangeFromToStep from to 1
 
