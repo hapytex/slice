@@ -79,24 +79,29 @@ getIndices sl@Slice { slFrom=f, slTo=t } n
         ~(staFb, stoFb) = bool id swap stepDir lu
         go = getIndex n lu
 
-class Slicable a b where
-    slice :: a -> Slice b -> a
-    slice = (⋮)
+class Slicable a σ where
+    slice :: a -> Slice σ -> a
+    {-# MINIMAL slice #-}
 
-    (⋮) :: a -> Slice b -> a
-    (⋮) = slice
-    {-# MINIMAL slice | (:) #-}
+(⋮) :: Slicable a σ => a -> Slice σ -> a
+(⋮) = slice
 
-class PartialSlicable a b where
-    trySlice :: a -> Slice b -> Maybe a
-    trySlice = (⋮?)
+(¢) :: Slicable a σ => a -> Slice σ -> a
+(¢) = slice
 
-    (⋮?) :: a -> Slice b -> Maybe a
-    (⋮?) = trySlice
-    {-# MINIMAL trySlice | (⋮?) #-}
+class PartialSlicable a σ where
+    trySlice :: a -> Slice σ -> Maybe a
+    {-# MINIMAL trySlice #-}
 
-instance {-# Overlappable #-} Slicable a b => PartialSlicable a b where
-    trySlice s = Just . slice s
+(⋮?) :: Slicable a σ => a -> Slice σ -> Maybe a
+(⋮?) = trySlice
+
+(¢?) :: Slicable a σ => a -> Slice σ -> Maybe a
+(¢?) = trySlice
+
+
+instance {-# Overlappable #-} Slicable a σ => PartialSlicable a σ where
+    trySlice a = Just . slice a
 
 instance Integral b => Slicable [a] b where
     slice = undefined
@@ -106,9 +111,7 @@ isVoid s@(Slice (Just bg) (Just en) _) = not (isNotVoid_ (getNumStep s) bg en)
 isVoid _ = False
 
 isNotVoid_ :: (Num a, Ord a) => a -> a -> a -> Bool
-isNotVoid_ st
-  | st <= 0 = (<)
-  | otherwise = (>)
+isNotVoid_ = bool (>) (<) . (0 >=)
 
 takeEach_ :: Integral i => i -> [a] -> [a]
 takeEach_ 1 = id  -- runtime optimization
